@@ -1,0 +1,325 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text to Excel</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+  <script>
+
+    function delayedAction(action, button) {
+      if (button.id !== 'endtime') {
+        button.disabled = true;
+      } else {
+        if (button.id == 'endtime') {
+          document.getElementById('endtime').disabled = true;
+        }
+        enableAllButtons(); // Enable all buttons when "End Time" button is clicked
+      }
+      action();
+    }
+
+    function enableEndTimeButton() {
+      const buttons = document.querySelectorAll('.button-group1 button');
+      buttons.forEach(button => {
+        button.disabled = false;
+      });
+    }
+
+    function enableAllButtons() {
+      const buttons = document.querySelectorAll('.button-group button');
+      const buttons1 = document.querySelectorAll('.table-row button');
+      const buttons2 = document.querySelectorAll('.table-row select');
+      const buttons3 = document.querySelectorAll('.button-group input');
+      const buttons4 = document.querySelectorAll('#EnterRemark');
+      buttons.forEach(button => {
+        document.getElementById('starttime').disabled = true;
+        button.disabled = false;
+      });
+      buttons1.forEach(button => {
+        button.disabled = false;
+      });
+      buttons2.forEach(button => {
+        button.disabled = false;
+      });
+      buttons3.forEach(button => {
+        button.disabled = false;
+      });
+      buttons4.forEach(button => {
+        button.disabled = false;
+      });
+    }
+
+    // Function to copy selected option to Excel
+    async function copySelectedOption() {
+  const selectedOption = lastSelectedOption;
+  console.log(`Selected option: ${selectedOption}`);
+
+  try {
+    // Send an IPC event to the main process with the selected option
+    await window.electron.ipcRenderer.invoke('text-copied-2', selectedOption);
+    console.log(`Option "${selectedOption}" copied to Excel`);
+  } catch (error) {
+    console.error('Error copying option to Excel:', error.message);
+  }
+}
+
+
+
+    async function copySelectedOption1() {
+      const selectedOption = document.getElementById("additionalDropdown").value;
+      const quantity = document.getElementById('AwbCount').value; // Access by ID
+      console.log(`Selected option: ${selectedOption}`);
+ 
+      try {
+        // Send an IPC event to the main process with the selected option
+        await window.electron.ipcRenderer.invoke('text-copied-3', {selectedOption:selectedOption, quantity:quantity});
+        console.log(`Option "${selectedOption}" copied to Excel`);
+      } catch (error) {
+        console.error('Error copying option to Excel:', error.message);
+      }
+    }
+
+    function quitApp() {
+      window.close(); // Close the window
+    }
+
+    // async function copyToAwb() {
+    //   const userID = document.getElementById("userID").value;
+
+    //   console.log('AWB Button clicked!');
+
+    //   try {
+    //     const AwbText = await window.electron.ipcRenderer.invoke('clipboard-read-text');
+    //     console.log(`Text copied to Excel: ${AwbText}`);
+
+    //     // Send an IPC event to the main process with the copied text
+    //     window.electron.ipcRenderer.send('awb-text-copied', AwbText);
+    //   } catch (error) {
+    //     console.error('Error reading clipboard:', error.message);
+    //   }
+    // }
+
+    async function copyToTransID() {
+      const userID = document.getElementById("userID").value;
+      console.log('Transaction ID Button clicked!');
+
+      try {
+        const TransText = await window.electron.ipcRenderer.invoke('clipboard-read-text');
+        console.log(`Text copied to Excel: ${TransText}`);
+
+        // Send an IPC event to the main process with the copied text
+        window.electron.ipcRenderer.send('trans-text-copied', { text: TransText, userID: userID });
+      } catch (error) {
+        console.error('Error reading clipboard:', error.message);
+      }
+    }
+    // async function copyToErrorCode() {
+
+    //   console.log('Error Code Button clicked!');
+
+    //   try {
+    //     const ECtext = await window.electron.ipcRenderer.invoke('clipboard-read-text');
+    //     console.log(`Text copied to Excel: ${ECtext}`);
+
+    //     // Send an IPC event to the main process with the copied text
+    //     window.electron.ipcRenderer.send('EC-text-copied', ECtext);
+    //   } catch (error) {
+    //     console.error('Error reading clipboard:', error.message);
+    //   }
+    // }
+
+    // async function copyToErrorDesc() {
+
+    //   console.log('Error Description Button clicked!');
+
+    //   try {
+    //     const EDtext = await window.electron.ipcRenderer.invoke('clipboard-read-text');
+    //     console.log(`Text copied to Excel (Error Description): ${EDtext}`);
+
+    //     // Send an IPC event to the main process with the copied text
+    //     window.electron.ipcRenderer.send('ED-text-copied', EDtext);
+    //   } catch (error) {
+    //     console.error('Error reading clipboard:', error.message);
+    //     // Add user notification or handle error gracefully (e.g., display message to user)
+    //   }
+    // }
+
+    // Recording time
+    
+    async function recordTime() {
+      try {
+        await window.electron.ipcRenderer.invoke('record-time');
+        console.log("Time Entered")
+        enableAllButtons();
+        enableEndTimeButton();
+      } catch (error) {
+        console.error('Error recording time:', error.message);
+      }
+    }
+
+    async function recordTime2() {
+      try {
+        await window.electron.ipcRenderer.invoke('record-time2');
+        console.log("Time Entered")
+        enableAllButtons();
+        document.getElementById('starttime').disabled = false;
+        document.getElementById('AwbCount').value = null;
+      } catch (error) {
+        console.error('Error recording time:', error.message);
+      }
+    }
+
+    async function handleEndTimeActions() {
+      // 1. Call the original function
+      await recordTime2();
+      await copySelectedOption();
+      await copySelectedOption1();
+    
+      // 2. Add calls to other functions you want to execute
+      console.log("Performing additional action 1...");
+      // Example: maybe clear the remarks field?
+      const remarksField = document.getElementById('userID1');
+      if (remarksField) {
+          remarksField.value = '';
+          console.log('Remarks field cleared.');
+      }    
+      console.log("All End Time actions are complete.");
+    }
+    
+    function changeText(elem) {
+  document.querySelector('.dropdown-button').textContent = elem.textContent;
+  toggleDropdown();
+}
+
+ async function toggleDropdown() {
+  var dropdownContent = document.getElementById('dropdown-content');
+  if (dropdownContent.style.display === 'none') {
+    dropdownContent.style.display = 'block';
+  } else {
+    dropdownContent.style.display = 'none';
+  }
+}
+
+let lastSelectedOption = '';
+function changeText(elem) {
+  const text = elem.textContent;
+  document.querySelector('.dropdown-button').textContent = text;
+  lastSelectedOption = text;
+  toggleDropdown();
+}
+
+  async function Remark(){
+    const remarkValue = document.getElementById('userID1').value;
+    console.log('Insert Remarks Button clicked!');
+
+    try {
+      // Send an IPC event to the main process with the remark value
+      const result = await window.electron.ipcRenderer.invoke('insert-remark', { remark: remarkValue });
+      console.log(`Remark inserted to Excel: ${result}`);
+    } catch (error) {
+      console.error('Error inserting remark:', error.message);
+    }
+  }
+
+// Add event listener to button
+btn.addEventListener('click', function() {
+  content.style.display = (content.style.display === 'none') ? 'block' : 'none';
+});
+
+
+  </script>
+  <div class="container">
+    <div class="title-bar">
+      <img class="logo" src="icon.png" alt="Logo">
+      <h1>MI 1 - Disputes Excel Automation</h1>
+    </div>
+    <div class="user-input-container">
+      <input type="text" id="userID" class=textbox placeholder="Enter User Name">
+    </div>
+    <div class="button-container">
+      <div class="button-group">
+        <button id="starttime" onclick="delayedAction(recordTime, this)">Start Time</button>
+      </div>
+
+      <table>
+        <tr>
+          <div class="button-group">
+            <!-- <button onclick="delayedAction(copyToAwb, this)">EDI No.</button> -->
+            <input type="number" min="0" id="AwbCount" name="quantity" class="awb-count-input" placeholder="Enter Awb Count">
+          </div>
+        </tr>
+        <tr>
+          <div class="button-group">
+            <!-- <button onclick="delayedAction(copyToErrorCode, this)"disabled>Erro code</button> -->
+            <button onclick="delayedAction(copyToTransID, this)" disabled>ODC Case No.</button>
+            <!-- <button onclick="delayedAction(copyToErrorDesc, this)" disabled>Error Description</button> -->
+          </div>
+        </tr>
+        <tr>
+
+        </tr>
+        <table class="dropdownTable">
+          <tr class="table-row">
+            <th>
+              <div class="dropdown">
+                <button onclick="toggleDropdown()" class="dropdown-button" id="additionalDropdown1">Select Action</button>
+                <div id="dropdown-content" class="dropdown-content">
+                  <a href="#" vlaue="Disputes - Closed Invoice" onclick="changeText(this)">Closed Invoice</a>
+                  <a href="#" vlaue="Disputes - Incorrect Customs Charges" onclick="changeText(this)">Incorrect Customs Charges</a>
+                  <a href="#" vlaue="Disputes - Open Invoice" onclick="changeText(this)"> Open Invoice</a>
+                  <a href="#" vlaue="Disputes - Invoice Partially Paid" onclick="changeText(this)">Invoice Partially Paid</a>
+                  <a href="#" vlaue="Disputes - D&T Exemptions" onclick="changeText(this)">D&T Exemptions</a>
+                  <a href="#" vlaue="Disputes - Gift Shipments" onclick="changeText(this)">Gift Shipments</a>
+                  <a href="#" vlaue="Disputes - High D&T Charges" onclick="changeText(this)">High D&T Charges</a>
+                  <a href="#" vlaue="Disputes - Manual Entry (Inv Paid W/ C/C Or Cheque)" onclick="changeText(this)">Manual Entry (Inv C/C or Cheq)</a>
+                  <a href="#" vlaue="Disputes - Misclassification" onclick="changeText(this)">Misclassification</a>
+                  <a href="#" vlaue="Disputes - Duplicate Billing" onclick="changeText(this)">Duplicate Billing</a>
+                  <a href="#" vlaue="Disputes - Ghost Shipments" onclick="changeText(this)">Ghost Shipments</a>
+                  <a href="#" vlaue="Rebills - General Queries" onclick="changeText(this)">General Queries</a>
+                  <a href="#" vlaue="Rebills - Non-Us Bill To Accounts" onclick="changeText(this)">Non-Us Bill To Accounts</a>
+                  <a href="#" vlaue="Rebills - Invoice Copy Request" onclick="changeText(this)">Invoice Copy Request</a>
+                  <a href="#" vlaue="Rebills - Queries & LOA Approval" onclick="changeText(this)">Queries & LOA Approval</a>
+                  <a href="#" vlaue="Rebills - Brokerage Inclusive" onclick="changeText(this)">Brokerage Inclusive</a>
+                  <a href="#" vlaue="Duplicate request" onclick="changeText(this)">Duplicate request</a>
+                  <a href="#" vlaue="Rebills - Requeue Cases" onclick="changeText(this)">Requeue Cases</a>
+                  <a href="#" vlaue="Rebills - Credits processed Late fee" onclick="changeText(this)">Credits processed Late fee</a>
+                </div>
+              </div>
+            </th>
+            <th>
+              <select id="additionalDropdown" disabled>
+                <option value="Select Option">Select EDI/FBO</option>
+                <option value="Completed">Completed</option>
+                <option value="Escalated">Escalated</option>
+              </select>
+            </th>
+          </tr>
+          <!-- <tr class="table-row">
+            <th>
+              <button id="copySelectedButton" onclick="delayedAction(copySelectedOption, this)" disabled>Insert to Excel</button>
+            </th>
+            <th>
+              <button id="copySelectedButton" onclick="delayedAction(copySelectedOption1, this)" disabled>Insert to Excel</button>
+            </th>
+          </tr> -->
+        </table>
+        <div class="user-input-container1">
+          <textarea id="userID1" class="textbox1" placeholder="Enter Remarks"></textarea>
+          <button id="EnterRemark" onclick="delayedAction(Remark, this)" disabled>Insert Remarks</button>
+        </div>
+        <div class="button-group1">
+          <button id="endtime" onclick="delayedAction(handleEndTimeActions, this)" disabled>End Time</button>
+        </div>
+    </div>
+    <button id="quitButton" onclick="delayedAction(quitApp, this)">EXIT</button>
+    <div class="watermark">v1.1.0</div>
+  </div>
+</body>
+
+</html>
